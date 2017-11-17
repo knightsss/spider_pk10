@@ -240,6 +240,9 @@ def get_rule(p_rule):
     if (rule_value == 7):
         rule_larsma_list.append([1, 1, 1, 0])
         rule_larsma_list.append([0, 0, 0, 1])
+    if (rule_value == 8):
+        rule_larsma_list.append([1, 1, 1, 0, 0, 0])
+        rule_larsma_list.append([0, 0, 0, 1, 1, 1])
 
     return rule_parity_list,rule_larsma_list
 

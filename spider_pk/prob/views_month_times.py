@@ -18,17 +18,17 @@ headers = {
     'User-Agent':'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36',
 }
 
-def admin_month(request):
+def admin_month_times(request):
     # ProbTotals.objects.all().delete()
     current_month = time.strftime('%Y-%m',time.localtime(time.time()))
     lotterys = LotteryMonth.objects.filter(lottery_month = current_month)
     probs = Probs.objects.all()
     prob_totals = ProbTotals.objects.all()
     result_flag = True
-    return render_to_response('index_month.html',{'lottery':lotterys,'probs':probs, 'prob_totals':prob_totals, 'result_flag': result_flag})
+    return render_to_response('index_month_times.html',{'lottery':lotterys,'probs':probs, 'prob_totals':prob_totals, 'result_flag': result_flag})
 
 @csrf_exempt   #处理Post请求出错的情况
-def index_month(request):
+def index_month_times(request):
     p_date = request.POST['in_month_date']
     p_month = p_date[0:7]
     p_day = p_date.split('-')[-1]
@@ -106,11 +106,14 @@ def index_month(request):
         result_flag = True
     # return render_to_response('index_month.html', {'lottery': lotterys, 'probs': probs, 'prob_totals': prob_totals,
     #                                                'p_date': p_date, 'result_flag': result_flag})
-    return render_to_response('index_month.html',{'lottery': lotterys,'faild_date':spider_faild_date_list,'p_date':p_date, 'result_flag': result_flag} )
+    return render_to_response('index_month_times.html',{'lottery': lotterys,'faild_date':spider_faild_date_list,'p_date':p_date, 'result_flag': result_flag} )
 
 #评估
 @csrf_exempt   #处理Post请求出错的情况
-def index_month_evaluation(request):
+def index_month_times_evaluation(request):
+
+    p_times = request.POST['in_times']
+
     p_date = request.POST['in_date']
     p_number = request.POST['in_number']
     p_monery = request.POST['in_monery']
@@ -135,13 +138,14 @@ def index_month_evaluation(request):
     rule_parity_list,rule_larsma_list = get_rule(p_rule)
     num = int(p_number)
     monery = int(p_monery)
-    evaluation(monery, num, parity_lottery_list, rule_parity_list, larsma_lottery_list, rule_larsma_list )
+    times = int(p_times)
+    evaluation(times, monery, num, parity_lottery_list, rule_parity_list, larsma_lottery_list, rule_larsma_list )
     probs = Probs.objects.all()
     prob_totals = ProbTotals.objects.all()
     result_flag = True
-    return render_to_response('index_month.html',{'lottery':lotterys,'probs':probs,'prob_totals':prob_totals,
+    return render_to_response('index_month_times.html',{'lottery':lotterys,'probs':probs,'prob_totals':prob_totals,
                                             'p_date':p_date, 'p_number':p_number, 'p_monery':p_monery,
-                                                  'p_rule':p_rule, 'result_flag':result_flag})
+                                                  'p_rule':p_rule, 'result_flag':result_flag, 'p_times':p_times})
 
 
 @csrf_exempt   #处理Post请求出错的情况,历史请求
@@ -374,7 +378,7 @@ def get_rule(p_rule):
     return rule_parity_list,rule_larsma_list
 
 
-def evaluation(monery, num, parity_lottery_list, rule_parity_list, larsma_lottery_list, rule_larsma_list ):
+def evaluation(times, monery, num, parity_lottery_list, rule_parity_list, larsma_lottery_list, rule_larsma_list ):
     print "evaluation..."
     #删除object,再将计算结果写入
     Probs.objects.all().delete()
@@ -408,7 +412,7 @@ def evaluation(monery, num, parity_lottery_list, rule_parity_list, larsma_lotter
             target = tran_parity_lottery_list[i]
             prob_value = [0] * len(target)
             # print 'odd or even'
-            prob_value = compute_rule(num, rule_parity, target, prob_value)
+            prob_value = compute_rule(times, num, rule_parity, target, prob_value)
             #开始计算行数据 1的个数，-1的个数
             prob_match = prob_value.count(1)
             # print 'prob_match ',prob_match
@@ -456,7 +460,7 @@ def evaluation(monery, num, parity_lottery_list, rule_parity_list, larsma_lotter
             target = tran_larsma_lottery_list[i]
             prob_value = [0] * len(target)
             # print 'odd or even'
-            prob_value = compute_rule(num, rule_larsma, target, prob_value)
+            prob_value = compute_rule(times, num, rule_larsma, target, prob_value)
             #开始计算行数据 1的个数，-1的个数
             prob_match = prob_value.count(1)
             # print 'prob_match ',prob_match
@@ -538,7 +542,7 @@ def evaluation(monery, num, parity_lottery_list, rule_parity_list, larsma_lotter
     tmp_all_total_obj.save()
 
 
-def compute_rule(num, rule, target, prob_value):
+def compute_rule_old(num, rule, target, prob_value):
     count = 0
     index = 0
     max = len(target)- num
@@ -567,6 +571,56 @@ def compute_rule(num, rule, target, prob_value):
                 index = 0
         else:
             # print "not match",count
+            count = count + 1
+
+    return prob_value
+
+
+def compute_rule(times, num, rule, target, prob_value):
+    count = 0
+    index = 0
+    max = len(target)- num
+    while(count < max):
+        #是否匹配规则
+        if(target[count:count+num] == rule[index:index+num] and count>=times ):
+            #处理location位置
+            try:
+                location = len(prob_value) - prob_value[::-1].index(-1) - 1
+            except:
+                location = -1
+            # print "location is ",location
+            # print "count is ",count
+            # print sum(target[count-times:count])
+            #获取最后一个-1的位置，当前匹配到的位置与-1位置间隔大于3，再次判断是否三个相同
+            if ((count - location > times) and (sum(target[count-times:count]) == 0 or sum(target[count-times:count]) == times)):
+            #判断规则前是否出现过times次
+            # if(count>=times):
+            #     print target[count:count+num]
+                #进一步判断target下一位与rule的下一位是否相等
+                count = count + num
+                index = index + num
+                # print count,'   ',target[count],'   ',index,'   ',rule[index]
+                while(target[count] == rule[index]):
+                    prob_value[count] = 1
+                    count = count + 1
+                    index = index + 1
+                    #如果到最后一个，跳出循环
+                    if (count >= len(target)):
+                        break
+
+                #循环结束即target下一位与rule的下一位不相等，记为-1
+                #下一位开始计数
+                if (count >= len(target)):
+                    break
+                else:
+                    prob_value[count] = -1
+                    count = count + 1
+                    index = 0
+            else:
+                # print "no match ",count
+                count = count + 1
+        else:
+            # print "no match ",count
             count = count + 1
 
     return prob_value

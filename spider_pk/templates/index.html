@@ -18,7 +18,20 @@
         <!--</tr>-->
     <!--</table>-->
 <!--{% endfor %}-->
-
+<ul class="nav nav-tabs">
+				<li class="active">
+					<a rel="nofollow" href="#">首页</a>
+				</li>
+				<li>
+					<a rel="nofollow" href="/admin_month/">按月统计</a>
+				</li>
+                <li>
+					<a rel="nofollow" href="#">资料</a>
+				</li>
+				<li class="disabled">
+					<a rel="nofollow" href="#">消息</a>
+				</li>
+			</ul>
 <div class="container">
 	<div class="row clearfix">
 		<div class="col-md-12 column">
@@ -221,7 +234,7 @@
                         </td>
 
                         <td>
-                            规则器选择(1-7)：<input type="number" id="in_rule_id" name="in_rule" value="{{ p_rule }}">
+                            规则器选择(1-8)：<input type="number" id="in_rule_id" name="in_rule" value="{{ p_rule }}">
                         </td>
                     </tr>
 
@@ -244,6 +257,8 @@
                             4单单单双<br>
                             4双双双单
                         </td>
+                        </tr>
+                    <tr>
                         <td>
                             5大大小小<br>
                             5小小大大
@@ -255,6 +270,10 @@
                         <td>
                             7大大大小<br>
                             7小小小大
+                        </td>
+                        <td>
+                            8大大大小小小<br>
+                            8小小小大大大
                         </td>
                     </tr>
 
@@ -362,11 +381,11 @@ function judgeevaluation()
     if (in_date && in_number && in_monery && in_rule){
         if(in_number>0 && in_number<11){
             if(in_monery > 0){
-                if(in_rule>0 && in_rule<8){
+                if(in_rule>0 && in_rule<=8){
                     document.getElementById('user_form').submit();
                 }
                 else{
-                    alert('规则选择为1-7！');
+                    alert('规则选择为1-8！');
                 }
 
             }else{
